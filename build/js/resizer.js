@@ -120,6 +120,9 @@
           this._resizeConstraint.side - this._ctx.lineWidth / 2,
           this._resizeConstraint.side - this._ctx.lineWidth / 2);
 
+      // вокруг ограничительной рамки рисует полупрозрачный черный слой.
+      this._drawBlackLayer();
+
       // Восстановление состояния канваса, которое было до вызова ctx.save
       // и последующего изменения системы координат. Нужно для того, чтобы
       // следующий кадр рисовался с привычной системой координат, где точка
@@ -127,6 +130,75 @@
       // некорректно сработает даже очистка холста или нужно будет использовать
       // сложные рассчеты для координат прямоугольника, который нужно очистить.
       this._ctx.restore();
+    },
+
+    /** 
+     * Вокруг ограничительного жёлтого прямоугольника прямоугольника
+     * рисуем два прямоугольника с общим цетром в центре холста
+     * и закрашиваем пространство между ними полупрозрачным фоном.
+     * @private
+    **/
+    _drawBlackLayer: function() {
+    
+      this._ctx.beginPath();
+
+      // перемещаем перо в левый верхний угол ограничительного прямоугольника,
+      // с учетом толщины его границы
+      this._ctx.moveTo(
+          (-this._resizeConstraint.side / 2) - this._ctx.lineWidth,
+          (-this._resizeConstraint.side / 2) - this._ctx.lineWidth);
+
+      var innerRectWidth = this._resizeConstraint.side + 2 * this._ctx.lineWidth;
+      var innerRectHeight = this._resizeConstraint.side + 2 * this._ctx.lineWidth;
+
+      // рисуем контур внутреннего прямоугольника.
+      this._passRoundRect(innerRectWidth, innerRectHeight, true);
+      
+      // соединяем контур внутреннего прямоугольника с контуром внешнего прямоугольника.
+      this._ctx.lineTo(-this._container.width / 2, -this._container.height / 2);
+
+      // рисуем контур внешнего прямоугольника.
+      this._passRoundRect(this._container.width, this._container.height, false);
+
+      // закрашиваем получившуюся фигуру полупрозрачным черным фоном.
+      this._ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+      this._ctx.fill();
+
+      // выводим текст с размерами изображения
+      this._ctx.fillStyle = "white";
+      this._ctx.textAlign = "center";
+      this._ctx.fillText(this._image.naturalWidth + " X " + this._image.naturalHeight,
+        0, -this._resizeConstraint.side / 2 - 2 * this._ctx.lineWidth);
+    },
+
+    /**
+     * Обводит контур прямоугольника по или против часовой стрелки
+     * @param {number} width
+     * @param {number} height
+     * @param {boolean} leftToRight
+     * @private
+    **/
+    _passRoundRect: function(width, height, leftToRight) {
+      // рисуем контур прямоугольника
+      if (leftToRight) {
+        // из левого верхнего угла в правый верхний угол
+        this._ctx.lineTo(width / 2, -height / 2);
+        // из правого верхнего угла в правый нижний угол
+        this._ctx.lineTo(width / 2, height / 2);
+        // из правого нижнего угла в левый нижний угол
+        this._ctx.lineTo(-width / 2, height / 2);
+        // из левого нижнего в левый верхний угол
+        this._ctx.lineTo(-width / 2, -height / 2);  
+      } else {
+        // из левого верхнего угла в левый нижний угол
+        this._ctx.lineTo(-width / 2, height / 2);
+        // из левого нижнего угла в правый нижний угол
+        this._ctx.lineTo(width / 2, height / 2);
+        // из правого нижнего угла в правый верхний угол
+        this._ctx.lineTo(width / 2, -height / 2);
+        // из правого верхнего угла в левый верхний угол
+        this._ctx.lineTo(-width / 2, -height / 2);
+      }      
     },
 
     /**
@@ -317,3 +389,5 @@
 
   window.Resizer = Resizer;
 })();
+
+
