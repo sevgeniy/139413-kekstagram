@@ -117,8 +117,9 @@
       this._ctx.strokeRect(
           (-this._resizeConstraint.side / 2) - this._ctx.lineWidth / 2,
           (-this._resizeConstraint.side / 2) - this._ctx.lineWidth / 2,
-          this._resizeConstraint.side - this._ctx.lineWidth / 2,
-          this._resizeConstraint.side - this._ctx.lineWidth / 2);
+          this._resizeConstraint.side + this._ctx.lineWidth,
+          this._resizeConstraint.side + this._ctx.lineWidth);
+
 
       // вокруг ограничительной рамки рисует полупрозрачный черный слой.
       this._drawBlackLayer();
@@ -196,7 +197,7 @@
         // из правого нижнего угла в левый нижний угол
         this._ctx.lineTo(-width / 2, height / 2);
         // из левого нижнего в левый верхний угол
-        this._ctx.lineTo(-width / 2, -height / 2);  
+        this._ctx.lineTo(-width / 2, -height / 2);
       } else {
         // из левого верхнего угла в левый нижний угол
         this._ctx.lineTo(-width / 2, height / 2);
