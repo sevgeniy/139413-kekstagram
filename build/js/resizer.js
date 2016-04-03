@@ -114,12 +114,17 @@
 
       // Отрисовка прямоугольника, обозначающего область изображения после
       // кадрирования. Координаты задаются от центра.
-      this._ctx.strokeRect(
-          (-this._resizeConstraint.side / 2) - this._ctx.lineWidth / 2,
-          (-this._resizeConstraint.side / 2) - this._ctx.lineWidth / 2,
-          this._resizeConstraint.side + this._ctx.lineWidth,
-          this._resizeConstraint.side + this._ctx.lineWidth);
+      // this._ctx.strokeRect(
+      //     (-this._resizeConstraint.side / 2) - this._ctx.lineWidth / 2,
+      //     (-this._resizeConstraint.side / 2) - this._ctx.lineWidth / 2,
+      //     this._resizeConstraint.side + this._ctx.lineWidth,
+      //     this._resizeConstraint.side + this._ctx.lineWidth);
 
+      // рисуем рамку из точек.
+      this._drawCircleRect((-this._resizeConstraint.side / 2) - this._ctx.lineWidth / 2,
+                           (-this._resizeConstraint.side / 2) - this._ctx.lineWidth / 2,
+                           this._resizeConstraint.side + this._ctx.lineWidth,
+                           this._resizeConstraint.side + this._ctx.lineWidth);
 
       // вокруг ограничительной рамки рисует полупрозрачный черный слой.
       this._drawBlackLayer();
@@ -134,6 +139,70 @@
       // некорректно сработает даже очистка холста или нужно будет использовать
       // сложные рассчеты для координат прямоугольника, который нужно очистить.
       this._ctx.restore();
+    },
+
+    /**
+     * Рисует прямоуголник, состоящий из кружков.
+     * @param {number} x
+     * @param {number} y
+     * @param {number} width
+     * @param {number} height
+     * @private
+    **/
+    _drawCircleRect: function(x, y, width, height) {
+      this._drawCircledLine(new Coordinate(x, y), new Coordinate(x + width, y));
+      this._drawCircledLine(new Coordinate(x + width, y), new Coordinate(x + width, y + height));
+      this._drawCircledLine(new Coordinate(x + width, y + height), new Coordinate(x, y + height));
+      this._drawCircledLine(new Coordinate(x, y + height), new Coordinate(x, y));
+    },
+
+    /**
+     * Соединяет две точки линией состоящей из кружков.
+     * @param {Coordinate} a
+     * @param {Coordinate} b
+     * @private
+    **/
+    _drawCircledLine: function(a, b) {
+      var radius = this._ctx.lineWidth / 2;
+      var interval = 4;
+
+      var distance = Math.sqrt((a.x - b.x)*(a.x - b.x) + (a.y - b.y)*(a.y - b.y));
+      
+      var sin = Math.abs((a.y - b.y) / distance);
+      var cos = Math.abs((a.x - b.x) / distance);
+
+      var step = 2 * radius + interval;
+
+      var directionX = a.x < b.x ? 1 : -1;
+      var directionY = a.y < b.y ? 1 : -1;
+
+      var deltaX = step * cos * directionX;
+      var deltaY = step * sin * directionY;
+      
+      var curr = new Coordinate(a.x, a.y);
+      var i = 0;
+      while(distance > 0) {
+        if (i != 0) {
+          curr.x += deltaX;
+          curr.y += deltaY;
+        }
+        this._drawCircle(curr, radius);
+        distance -= step;
+        i++;
+      }
+    },
+
+    /**
+     * Рисует кружок.
+     * @param {Coordinate} point
+     * @param {number} radius
+     * @private
+    **/
+    _drawCircle: function(point, radius) {
+      this._ctx.beginPath();
+      this._ctx.fillStyle = "yellow";
+      this._ctx.arc(point.x, point.y, radius, 0, 2 * Math.PI);
+      this._ctx.fill();
     },
 
     /** 
