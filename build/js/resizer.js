@@ -169,7 +169,7 @@
       this._drawZigZagLine(new Coordinate(x + width, y + height), new Coordinate(x, y + height));
       this._drawZigZagLine(new Coordinate(x, y + height), new Coordinate(x, y));
 
-      this._ctx.stroke();      
+      this._ctx.stroke();
     },
 
     /**
@@ -182,8 +182,8 @@
       var radius = this._ctx.lineWidth / 2;
       var interval = 4;
 
-      var distance = Math.sqrt((a.x - b.x)*(a.x - b.x) + (a.y - b.y)*(a.y - b.y));
-      
+      var distance = Math.sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
+
       var sin = Math.abs((a.y - b.y) / distance);
       var cos = Math.abs((a.x - b.x) / distance);
 
@@ -194,11 +194,11 @@
 
       var deltaX = step * cos * directionX;
       var deltaY = step * sin * directionY;
-      
+
       var curr = new Coordinate(a.x, a.y);
       var i = 0;
       while(distance > 0) {
-        if (i != 0) {
+        if (i !== 0) {
           curr.x += deltaX;
           curr.y += deltaY;
         }
@@ -210,11 +210,13 @@
 
     /**
      * Рисует отрезок зигзагом.
+     * @param {Coordinate} a
+     * @param {Coordinate} b
      * @private
     **/
     _drawZigZagLine: function(a, b) {
-      var distance = Math.sqrt((a.x - b.x)*(a.x - b.x) + (a.y - b.y)*(a.y - b.y));
-      
+      var distance = Math.sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
+
       var sin = Math.abs((a.y - b.y) / distance);
       var cos = Math.abs((a.x - b.x) / distance);
 
@@ -226,11 +228,11 @@
       var deltaX = step * cos * directionX;
       var deltaY = step * sin * directionY;
 
-      var curr = new Coordinate(a.x, a.y);   
+      var curr = new Coordinate(a.x, a.y);
 
       while (distance > step) {
         var next = new Coordinate(curr.x + deltaX, curr.y + deltaY);
-      
+
         this._drawZigZag(curr, next);
         distance -= step;
         curr = next;
@@ -239,21 +241,24 @@
 
     /**
      * Рисует зигзаг между двумя точками.
+     * @param {Coordinate} a
+     * @param {Coordinate} b
      * @private
     **/
     _drawZigZag: function(a, b) {
       var deviation = 5;
 
-      if (a.x > b.x || a.y < b.y) 
+      if (a.x > b.x || a.y < b.y) {
         deviation = -deviation;
+      }
 
       this._ctx.lineTo(a.x, a.y);
-      if (a.y == b.y) {
-        this._ctx.lineTo((a.x + b.x) / 2, a.y + deviation);  
+      if (a.y === b.y) {
+        this._ctx.lineTo((a.x + b.x) / 2, a.y + deviation);
       }
-      if (a.x == b.x) {
+      if (a.x === b.x) {
         this._ctx.lineTo(a.x + deviation, (a.y + b.y) / 2);
-      } 
+      }
       this._ctx.lineTo(b.x, b.y);
     },
 
@@ -265,19 +270,19 @@
     **/
     _drawCircle: function(point, radius) {
       this._ctx.beginPath();
-      this._ctx.fillStyle = "yellow";
+      this._ctx.fillStyle = 'yellow';
       this._ctx.arc(point.x, point.y, radius, 0, 2 * Math.PI);
       this._ctx.fill();
     },
 
-    /** 
+    /**
      * Вокруг ограничительного жёлтого прямоугольника прямоугольника
      * рисуем два прямоугольника с общим цетром в центре холста
      * и закрашиваем пространство между ними полупрозрачным фоном.
      * @private
     **/
     _drawBlackLayer: function() {
-    
+
       this._ctx.beginPath();
 
       // перемещаем перо в левый верхний угол ограничительного прямоугольника,
@@ -291,7 +296,7 @@
 
       // рисуем контур внутреннего прямоугольника.
       this._passRoundRect(innerRectWidth, innerRectHeight, true);
-      
+
       // соединяем контур внутреннего прямоугольника с контуром внешнего прямоугольника.
       this._ctx.lineTo(-this._container.width / 2, -this._container.height / 2);
 
@@ -299,7 +304,7 @@
       this._passRoundRect(this._container.width, this._container.height, false);
 
       // закрашиваем получившуюся фигуру полупрозрачным черным фоном.
-      this._ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+      this._ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
       this._ctx.fill();
     },
 
@@ -308,9 +313,9 @@
      * @private
     **/
     _drawImageSize: function() {
-      this._ctx.fillStyle = "white";
-      this._ctx.textAlign = "center";
-      this._ctx.fillText(this._image.naturalWidth + " X " + this._image.naturalHeight,
+      this._ctx.fillStyle = 'white';
+      this._ctx.textAlign = 'center';
+      this._ctx.fillText(this._image.naturalWidth + ' X ' + this._image.naturalHeight,
         0, -this._resizeConstraint.side / 2 - 2 * this._ctx.lineWidth);
     },
 
@@ -341,7 +346,7 @@
         this._ctx.lineTo(width / 2, -height / 2);
         // из правого верхнего угла в левый верхний угол
         this._ctx.lineTo(-width / 2, -height / 2);
-      }      
+      }
     },
 
     /**
