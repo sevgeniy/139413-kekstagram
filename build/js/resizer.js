@@ -121,7 +121,11 @@
       //     this._resizeConstraint.side + this._ctx.lineWidth);
 
       // рисуем рамку из точек.
-      this._drawCircleRect((-this._resizeConstraint.side / 2) - this._ctx.lineWidth / 2,
+      // this._drawCircleRect((-this._resizeConstraint.side / 2) - this._ctx.lineWidth / 2,
+      //                      (-this._resizeConstraint.side / 2) - this._ctx.lineWidth / 2,
+      //                      this._resizeConstraint.side + this._ctx.lineWidth,
+      //                      this._resizeConstraint.side + this._ctx.lineWidth);
+      this._drawZigZagRect((-this._resizeConstraint.side / 2) - this._ctx.lineWidth / 2,
                            (-this._resizeConstraint.side / 2) - this._ctx.lineWidth / 2,
                            this._resizeConstraint.side + this._ctx.lineWidth,
                            this._resizeConstraint.side + this._ctx.lineWidth);
@@ -154,6 +158,18 @@
       this._drawCircledLine(new Coordinate(x + width, y), new Coordinate(x + width, y + height));
       this._drawCircledLine(new Coordinate(x + width, y + height), new Coordinate(x, y + height));
       this._drawCircledLine(new Coordinate(x, y + height), new Coordinate(x, y));
+    },
+
+    _drawZigZagRect: function(x, y, width, height) {
+      this._ctx.setLineDash([]);
+      this._ctx.beginPath();
+
+      this._drawZigZagLine(new Coordinate(x, y), new Coordinate(x + width, y));
+      this._drawZigZagLine(new Coordinate(x + width, y), new Coordinate(x + width, y + height));
+      this._drawZigZagLine(new Coordinate(x + width, y + height), new Coordinate(x, y + height));
+      this._drawZigZagLine(new Coordinate(x, y + height), new Coordinate(x, y));
+
+      this._ctx.stroke();      
     },
 
     /**
@@ -190,6 +206,55 @@
         distance -= step;
         i++;
       }
+    },
+
+    /**
+     * Рисует отрезок зигзагом.
+     * @private
+    **/
+    _drawZigZagLine: function(a, b) {
+      var distance = Math.sqrt((a.x - b.x)*(a.x - b.x) + (a.y - b.y)*(a.y - b.y));
+      
+      var sin = Math.abs((a.y - b.y) / distance);
+      var cos = Math.abs((a.x - b.x) / distance);
+
+      var step = 10;
+
+      var directionX = a.x < b.x ? 1 : -1;
+      var directionY = a.y < b.y ? 1 : -1;
+
+      var deltaX = step * cos * directionX;
+      var deltaY = step * sin * directionY;
+
+      var curr = new Coordinate(a.x, a.y);   
+
+      while (distance > step) {
+        var next = new Coordinate(curr.x + deltaX, curr.y + deltaY);
+      
+        this._drawZigZag(curr, next);
+        distance -= step;
+        curr = next;
+      }
+    },
+
+    /**
+     * Рисует зигзаг между двумя точками.
+     * @private
+    **/
+    _drawZigZag: function(a, b) {
+      var deviation = 5;
+
+      if (a.x > b.x || a.y < b.y) 
+        deviation = -deviation;
+
+      this._ctx.lineTo(a.x, a.y);
+      if (a.y == b.y) {
+        this._ctx.lineTo((a.x + b.x) / 2, a.y + deviation);  
+      }
+      if (a.x == b.x) {
+        this._ctx.lineTo(a.x + deviation, (a.y + b.y) / 2);
+      } 
+      this._ctx.lineTo(b.x, b.y);
     },
 
     /**
