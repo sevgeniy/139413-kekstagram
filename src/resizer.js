@@ -502,6 +502,14 @@
       imageToExport.src = temporaryCanvas.toDataURL('image/png');
 
       return imageToExport;
+    },
+
+    /**
+     * Возвращает загруженную картинку.
+     * @return {Image}
+     */
+    getImage: function() {
+      return this._image;
     }
   };
 
