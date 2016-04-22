@@ -111,25 +111,25 @@
    * Поле слева.
    * @type {HTMLElement}
    */
-  var inputX = document.getElementById('resize-x');
+  var inputX = resizeForm['resize-x'];
 
   /**
    * Поле сверху.
    * @type {HTMLElement}
    */
-  var inputY = document.getElementById('resize-y');
+  var inputY = resizeForm['resize-y'];
 
   /**
    * Поле сторона.
    * @type {HTMLElement}
    */
-  var inputSize = document.getElementById('resize-size');
+  var inputSize = resizeForm['resize-size'];
 
   /**
    * Кнопка отправки формы ресайзинга.
    * @type {HTMLElement}
    */
-  var resizeFwd = document.getElementById('resize-fwd');
+  var resizeFwd = resizeForm['resize-fwd'];
 
   // Инициализируем поля ввода обработчиками событий.
   function initResizeInputs() {
@@ -154,68 +154,53 @@
     inputSize.max = Math.min(currentResizer._image.naturalWidth - inputX.value,
                              currentResizer._image.naturalHeight - inputY.value);
 
-    inputX.addEventListener('input', function() {
-      inputX.max = currentResizer._image.naturalWidth - inputSize.value;
-
-      updateResizeSubmitBtn();
-    });
-
-    inputY.addEventListener('input', function() {
-      inputY.max = currentResizer._image.naturalHeight - inputSize.value;
-
-      updateResizeSubmitBtn();
-    });
-
-    inputSize.addEventListener('input', function() {
-      inputSize.max = Math.min(currentResizer._image.naturalWidth - inputX.value,
-                                currentResizer._image.naturalHeight - inputY.value);
-
-      updateResizeSubmitBtn();
-    });
+    inputX.addEventListener('input', onInput);
+    inputY.addEventListener('input', onInput);
+    inputSize.addEventListener('input', onInput);
 
     // Если значение поля выходит за пределы допустимых значений,
     // то присваиваем валидное значение.
-    inputX.addEventListener('blur', function() {
-      if (!inputX.value) {
-        inputX.value = 0;
-      }
+    inputX.addEventListener('blur', onInputBlur);
+    inputY.addEventListener('blur', onInputBlur);
+    inputSize.addEventListener('blur', onInputBlur);
+  }
 
-      if (+inputX.value > inputX.max) {
-        inputX.value = inputX.max;
-      } else if (+inputX.value < inputX.min) {
-        inputX.value = inputX.min;
-      }
+  function onInput(e) {
+    calcMax(e);
+    updateResizeSubmitBtn();
+  }
 
-      updateResizeSubmitBtn();
-    });
+  function calcMax(e) {
+    var input = e.target;
 
-    inputY.addEventListener('blur', function() {
-      if (!inputY.value) {
-        inputY.value = 0;
-      }
+    switch(input) {
+      case inputX:
+        inputX.max = currentResizer._image.naturalWidth - inputSize.value;
+        break;
+      case inputY:
+        inputY.max = currentResizer._image.naturalHeight - inputSize.value;
+        break;
+      case inputSize:
+        inputSize.max = Math.min(currentResizer._image.naturalWidth - inputX.value,
+         currentResizer._image.naturalHeight - inputY.value);
+        break;
+    }
+  }
 
-      if (+inputY.value > inputY.max) {
-        inputY.value = inputY.max;
-      } else if (+inputY.value < inputY.min) {
-        inputY.value = inputY.min;
-      }
+  function onInputBlur(e) {
+    var input = e.target;
 
-      updateResizeSubmitBtn();
-    });
+    if (!input.value) {
+      input.value = 0;
+    }
 
-    inputSize.addEventListener('blur', function() {
-      if (!inputSize.value) {
-        inputSize.value = 0;
-      }
+    if (+input.value > input.max) {
+      input.value = input.max;
+    } else if (+input.value < input.min) {
+      input.value = input.min;
+    }
 
-      if (+inputSize.value > inputSize.max) {
-        inputSize.value = inputSize.max;
-      } else if (+inputSize.value < inputSize.min) {
-        inputSize.value = inputSize.min;
-      }
-
-      updateResizeSubmitBtn();
-    });
+    updateResizeSubmitBtn();
   }
 
   // Если все значения формы валидны, то кнопка отправки формы активна
@@ -284,9 +269,7 @@
           // после окончания загрузки картинки
           // инициализируем значения полей с параметрами кадрирования
           var resizerImage = currentResizer.getImage();
-          resizerImage.addEventListener('load', function() {
-            initResizeInputs();
-          });
+          resizerImage.addEventListener('load', initResizeInputs);
 
           currentResizer.setElement(resizeForm);
           uploadMessage.classList.add('invisible');
