@@ -72,7 +72,11 @@
    * @return {boolean}
    */
   function resizeFormIsValid() {
-    return true;
+    return inputX.value >= 0 &&
+           inputY.value >= 0 &&
+           inputSize.value >= 0 &&
+           (+inputX.value) + (+inputSize.value) <= currentResizer._image.naturalWidth &&
+           (+inputY.value) + (+inputSize.value) <= currentResizer._image.naturalHeight;
   }
 
   /**
@@ -102,6 +106,114 @@
    * @type {HTMLElement}
    */
   var uploadMessage = document.querySelector('.upload-message');
+
+  /**
+   * Поле слева.
+   * @type {HTMLElement}
+   */
+  var inputX = resizeForm['resize-x'];
+
+  /**
+   * Поле сверху.
+   * @type {HTMLElement}
+   */
+  var inputY = resizeForm['resize-y'];
+
+  /**
+   * Поле сторона.
+   * @type {HTMLElement}
+   */
+  var inputSize = resizeForm['resize-size'];
+
+  /**
+   * Кнопка отправки формы ресайзинга.
+   * @type {HTMLElement}
+   */
+  var resizeFwd = resizeForm['resize-fwd'];
+
+  // Инициализируем поля ввода обработчиками событий.
+  function initResizeInputs() {
+    // чтобы валидация пропускала не только целые числа, но и дробные.
+    inputX.step = 'any';
+    inputY.step = 'any';
+    inputSize.step = 'any';
+
+    var constraint = currentResizer.getConstraint();
+
+    inputX.value = constraint.x;
+    inputY.value = constraint.y;
+    inputSize.value = constraint.side;
+
+    inputX.min = 0;
+    inputX.max = currentResizer._image.naturalWidth - inputSize.value;
+
+    inputY.min = 0;
+    inputY.max = currentResizer._image.naturalHeight - inputSize.value;
+
+    inputSize.min = 0;
+    inputSize.max = Math.min(currentResizer._image.naturalWidth - inputX.value,
+                             currentResizer._image.naturalHeight - inputY.value);
+
+    inputX.addEventListener('input', onInput);
+    inputY.addEventListener('input', onInput);
+    inputSize.addEventListener('input', onInput);
+
+    // Если значение поля выходит за пределы допустимых значений,
+    // то присваиваем валидное значение.
+    inputX.addEventListener('blur', onInputBlur);
+    inputY.addEventListener('blur', onInputBlur);
+    inputSize.addEventListener('blur', onInputBlur);
+  }
+
+  function onInput(e) {
+    calcMax(e);
+    updateResizeSubmitBtn();
+  }
+
+  function calcMax(e) {
+    var input = e.target;
+
+    switch(input) {
+      case inputX:
+        inputX.max = currentResizer._image.naturalWidth - inputSize.value;
+        break;
+      case inputY:
+        inputY.max = currentResizer._image.naturalHeight - inputSize.value;
+        break;
+      case inputSize:
+        inputSize.max = Math.min(currentResizer._image.naturalWidth - inputX.value,
+         currentResizer._image.naturalHeight - inputY.value);
+        break;
+    }
+  }
+
+  function onInputBlur(e) {
+    var input = e.target;
+
+    if (!input.value) {
+      input.value = 0;
+    }
+
+    if (+input.value > input.max) {
+      input.value = input.max;
+    } else if (+input.value < input.min) {
+      input.value = input.min;
+    }
+
+    updateResizeSubmitBtn();
+  }
+
+  // Если все значения формы валидны, то кнопка отправки формы активна
+  // если нет, то кнопка не активна.
+  function updateResizeSubmitBtn() {
+    if (inputX.checkValidity() && inputY.checkValidity() && inputSize.checkValidity()) {
+      resizeFwd.removeAttribute('disabled');
+      resizeFwd.style.opacity = 1;
+    } else {
+      resizeFwd.setAttribute('disabled', 'disabled');
+      resizeFwd.style.opacity = 0.2;
+    }
+  }
 
   /**
    * @param {Action} action
@@ -153,6 +265,12 @@
           cleanupResizer();
 
           currentResizer = new Resizer(fileReader.result);
+
+          // после окончания загрузки картинки
+          // инициализируем значения полей с параметрами кадрирования
+          var resizerImage = currentResizer.getImage();
+          resizerImage.addEventListener('load', initResizeInputs);
+
           currentResizer.setElement(resizeForm);
           uploadMessage.classList.add('invisible');
 
