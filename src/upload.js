@@ -8,6 +8,11 @@
 'use strict';
 
 (function() {
+
+  var BIRTH_MONTH = 8;
+  var BIRTH_DAY = 10;
+  var browserCookies = require('browser-cookies');
+
   /** @enum {string} */
   var FileType = {
     'GIF': '',
@@ -318,6 +323,15 @@
       resizeForm.classList.add('invisible');
       filterForm.classList.remove('invisible');
     }
+
+    // достаём значение посл использованного cookie или берём значение по умолчанию.
+    var selectedFilterValue = browserCookies.get('filter') || 'none';
+    // находим input относящийся к выбранному фильтру.
+    var selectedFilter = document.querySelector('.upload-filter-controls input[value=' + selectedFilterValue + ']');
+    selectedFilter.checked = true;
+
+    // вызываем обработчик изменения фильтра, чтобы выбранный фильтр был применен к кратинке.
+    onFilterChange();
   };
 
   /**
@@ -350,7 +364,9 @@
    * Обработчик изменения фильтра. Добавляет класс из filterMap соответствующий
    * выбранному значению в форме.
    */
-  filterForm.onchange = function() {
+  filterForm.addEventListener('change', onFilterChange);
+
+  function onFilterChange(e) {
     if (!filterMap) {
       // Ленивая инициализация. Объект не создается до тех пор, пока
       // не понадобится прочитать его в первый раз, а после этого запоминается
@@ -362,6 +378,10 @@
       };
     }
 
+    if (e) {
+      setFilterCookie(e.target.value);
+    }
+
     var selectedFilter = [].filter.call(filterForm['upload-filter'], function(item) {
       return item.checked;
     })[0].value;
@@ -370,7 +390,35 @@
     // убрать предыдущий примененный класс. Для этого нужно или запоминать его
     // состояние или просто перезаписывать.
     filterImage.className = 'filter-image-preview ' + filterMap[selectedFilter];
-  };
+  }
+
+  /**
+   * Сохраняет применённый фильтр в cookie.
+   * @param {String} cookieValue
+   */
+  function setFilterCookie(cookieValue) {
+    var currentDate = new Date();
+
+    // определяем дату последнего прошедшего дня рождения.
+    // инициализируем текущей датой сохранённой в переменной currentDate
+    var birthDate = new Date(currentDate.valueOf());
+    birthDate.setMonth(BIRTH_MONTH);
+    birthDate.setDate(BIRTH_DAY);
+
+    // если в этом году День Рождения ещё не наступил - уменьшаем год на 1.
+    if (birthDate > new Date()) {
+      birthDate.setFullYear(birthDate.getFullYear() - 1);
+    }
+
+    // определяем время жизни cookie в милисекундах.
+    var cookieLifeTime = currentDate.valueOf() - birthDate.valueOf();
+    // определяем дату когда cookies устареют
+    var cookieExpiresDate = new Date(+currentDate + cookieLifeTime);
+
+    browserCookies.set('filter', cookieValue, {
+      expires: cookieExpiresDate
+    });
+  }
 
   cleanupResizer();
   updateBackground();
