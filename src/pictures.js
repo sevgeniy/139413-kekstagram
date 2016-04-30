@@ -1,8 +1,6 @@
 'use strict';
 
 (function() {
-  var IMAGE_WIDTH = 182;
-  var IMAGE_HEIGHT = 182;
   var IMAGE_LOAD_TIMEOUT = 10000;
 
   var filters = document.querySelector('.filters');
@@ -48,7 +46,7 @@
     picture.querySelector('.picture-comments').textContent = data.comments;
     picture.querySelector('.picture-likes').textContent = data.likes;
 
-	// загружаем картинку
+    // загружаем картинку
     img.src = data.url;
 
     imgLoadTimeout = setTimeout(function() {
@@ -59,16 +57,16 @@
     container.appendChild(picture);
 
     // обработчик успешной загрузки картинки.
-    function onLoad(e) {
-	  clearTimeout(imgLoadTimeout);
-	}
+    function onLoad() {
+      clearTimeout(imgLoadTimeout);
+    }
 
-	// обработчик ошибки при загрузке изображения.
-	function onError(e) {
-	  picture.classList.add('picture-load-failure');
+    // обработчик ошибки при загрузке изображения.
+    function onError() {
+      picture.classList.add('picture-load-failure');
 
-	  clearTimeout(imgLoadTimeout);
-	}
+      clearTimeout(imgLoadTimeout);
+    }
   }
 
   // прячет фильтр.
