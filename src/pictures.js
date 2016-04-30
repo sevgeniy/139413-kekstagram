@@ -2,7 +2,7 @@
 
 (function() {
   var IMAGE_LOAD_TIMEOUT = 10000;
-  var DOWNLOAD_PICTURES_URL = 'http://o0.github.io/assets/json/pictures.json';
+  var DOWNLOAD_PICTURES_URL = 'https://o0.github.io/assets/json/pictures.json';
 
   var filters = document.querySelector('.filters');
   var template = document.getElementById('picture-template');
