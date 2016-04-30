@@ -222,7 +222,7 @@
 
   /**
    * @param {Action} action
-   * @param {string=} message
+   * @param {string} message
    * @return {Element}
    */
   function showMessage(action, message) {
@@ -327,7 +327,7 @@
     // достаём значение посл использованного cookie или берём значение по умолчанию.
     var selectedFilterValue = browserCookies.get('filter') || 'none';
     // находим input относящийся к выбранному фильтру.
-    var selectedFilter = document.querySelector('.upload-filter-controls input[value=' + selectedFilterValue + ']');
+    var selectedFilter = document.getElementById('upload-filter-' + selectedFilterValue);
     selectedFilter.checked = true;
 
     // вызываем обработчик изменения фильтра, чтобы выбранный фильтр был применен к кратинке.
