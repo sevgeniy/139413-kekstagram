@@ -38,21 +38,17 @@
   function addPicture(data, container) {
     var picture = pictureTemplate.cloneNode(true);
 
-    var img = new Image();
+    var img = picture.querySelector('img');
     var imgLoadTimeout;
 
-    img.addEventListener('load', function(e) {
-      onLoad(e, picture);
-      clearTimeout(imgLoadTimeout);
-    });
-
-    img.addEventListener('error', function(e) {
-      onError(e, picture);
-    });
+    // поиск старой картинки
+    img.addEventListener('load', onLoad);
+    img.addEventListener('error', onError);
 
     picture.querySelector('.picture-comments').textContent = data.comments;
     picture.querySelector('.picture-likes').textContent = data.likes;
 
+	// загружаем картинку
     img.src = data.url;
 
     imgLoadTimeout = setTimeout(function() {
@@ -61,21 +57,18 @@
     }, IMAGE_LOAD_TIMEOUT);
 
     container.appendChild(picture);
-  }
 
-  // обработчик успешной загрузки картинки.
-  function onLoad(e, picture) {
-    // устанавливаем значение src для тега <img />
-    picture.style.backgroundImage = 'url(\'' + e.target.src + '\')';
+    // обработчик успешной загрузки картинки.
+    function onLoad(e) {
+	  clearTimeout(imgLoadTimeout);
+	}
 
-    // устанавливаем ширину и высоту изображения.
-    e.target.width = IMAGE_WIDTH;
-    e.target.height = IMAGE_HEIGHT;
-  }
+	// обработчик ошибки при загрузке изображения.
+	function onError(e) {
+	  picture.classList.add('picture-load-failure');
 
-  // обработчик ошибки при загрузке изображения.
-  function onError(e, picture) {
-    picture.classList.add('picture-load-failure');
+	  clearTimeout(imgLoadTimeout);
+	}
   }
 
   // прячет фильтр.
