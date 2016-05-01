@@ -29,11 +29,10 @@
   function loadPictures() {
     showLoader();
 
-    var xhr = createXmlHttpRequest();
-    xhr.send();
+    sendXmlHttpRequest();
   }
 
-  function createXmlHttpRequest() {
+  function sendXmlHttpRequest() {
     var xhr = new XMLHttpRequest();
     xhr.open('GET', DOWNLOAD_PICTURES_URL, true);
     xhr.timeout = IMAGE_LOAD_TIMEOUT;
@@ -42,15 +41,19 @@
     xhr.addEventListener('error', onXhrError);
     xhr.addEventListener('timeout', onXhrTimeout);
 
-    return xhr;
+    xhr.send();
 
     function onXhrLoad() {
       // проинициализировать переменную картинками.
-      pictures = JSON.parse(xhr.responseText);
-      pictures.forEach(function(picture) {
-        picture.date = new Date(picture.date);
-      });
-      initPictures(pictures);
+      try {
+        pictures = JSON.parse(xhr.responseText);
+        pictures.forEach(function(picture) {
+          picture.date = new Date(picture.date);
+        });
+        initPictures(pictures);
+        picturesContainer.classList.add('pictures-failure');
+      }
+
       hideLoader();
     }
 
@@ -121,14 +124,12 @@
 
     var newPicturesDate = getNewPicturesDate();
 
-    // фильтруем картинки по дате
+    // фильтруем картинки по дате и сортируем картинки по убыванию даты.
     var newPictures = pictures.filter(function(picture) {
       // новыми считаются картинки с датой больше чем дата указанная выше.
       return picture.date >= newPicturesDate;
-    });
-
-	// сортируем картинки по убыванию даты.
-    newPictures.sort(function(p1, p2) {
+    })
+    .sort(function(p1, p2) {
       return p2.date - p1.date;
     });
 
