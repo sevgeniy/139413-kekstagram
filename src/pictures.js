@@ -51,6 +51,7 @@
           picture.date = new Date(picture.date);
         });
         initPictures(pictures);
+      } catch(ex) {
         picturesContainer.classList.add('pictures-failure');
       }
 
@@ -124,7 +125,7 @@
 
     var newPicturesDate = getNewPicturesDate();
 
-    // фильтруем картинки по дате и сортируем картинки по убыванию даты.
+    // фильтруем картинки по дате и сортируем их по убыванию даты.
     var newPictures = pictures.filter(function(picture) {
       // новыми считаются картинки с датой больше чем дата указанная выше.
       return picture.date >= newPicturesDate;
