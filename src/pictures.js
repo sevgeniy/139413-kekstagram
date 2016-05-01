@@ -3,23 +3,35 @@
 (function() {
   var IMAGE_LOAD_TIMEOUT = 10000;
   var DOWNLOAD_PICTURES_URL = 'https://o0.github.io/assets/json/pictures.json';
+  var PAGE_SIZE = 12;
+  var SCROLL_TIMEOUT = 100;
 
   var filters = document.querySelector('.filters');
   var template = document.getElementById('picture-template');
-  var pictureTemplate;
 
+  var popularFilter = document.getElementById('filter-popular');
+  var newFilter = document.getElementById('filter-new');
+  var discussedFilter = document.getElementById('filter-discussed');
+
+  var pictureTemplate;
   if ('content' in template) {
     pictureTemplate = template.content.querySelector('.picture');
   } else {
     pictureTemplate = template.querySelector('.picture');
   }
 
-  var pictures;
-
-  filters.addEventListener('change', onPictureFilterChanged);
+  // переменная для хранения всех загруженных картинок.
+  var pictures = [];
+  // переменная для хранения картинок к которым применен текущий фильтр.
+  var currentFilterPictures = [];
+  // номер текущей показанной страницы.
+  var currentPage = 0;
 
   // получаем блок pictures, в который будем добавлять картинки.
   var picturesContainer = document.querySelector('.pictures');
+
+  setScrollEnabled();
+  setFilterEnabled();
 
   hideFilter();
   // загрузить картинки
@@ -30,6 +42,10 @@
     showLoader();
 
     sendXmlHttpRequest();
+  }
+
+  function setFilterEnabled() {
+    filters.addEventListener('click', onPictureFilterClicked);
   }
 
   function sendXmlHttpRequest() {
@@ -50,7 +66,8 @@
         pictures.forEach(function(picture) {
           picture.date = new Date(picture.date);
         });
-        initPictures(pictures);
+        currentFilterPictures = pictures.slice();
+        renderPictures(pictures);
       } catch(ex) {
         picturesContainer.classList.add('pictures-failure');
       }
@@ -82,33 +99,58 @@
   /**
   * Заполняет контейнер картинками.
   * @param {object} data
+  * @param {number} page
   */
-  function initPictures(data) {
-    data.forEach(function(picture) {
+  function renderPictures(data, page) {
+    // если номер страницы для отрисовки не передан,
+    // то очищаем контеёнер с картинками и отрисовываем первую страницу.
+    if (typeof page === 'undefined') {
+      clearPictures();
+      currentPage = 0;
+      page = 0;
+    }
+
+    var from = page * PAGE_SIZE;
+    var to = from + PAGE_SIZE;
+
+    data.slice(from, to).forEach(function(picture) {
       // для каждого элемента массива создаём блок
       // фотографии на основе шаблона.
       addPicture(picture, picturesContainer);
     });
+
+    // если место для картинок ещё естьи есть картинки
+    // то показываем след. страницу
+    if (hasFreeSpace() && isNextPageAvailable(data, page, PAGE_SIZE)) {
+      renderPictures(data, ++currentPage);
+    }
   }
 
-  function onPictureFilterChanged() {
-    clearPictures();
+  /**
+  * Определяет есть ли на экране свободное место для отображения картинок.
+  */
+  function hasFreeSpace() {
+    var screenHeight = window.screen.availHeight;
+    var bodyContentHeight = document.body.offsetHeight;
 
-    var selectedFilter = [].filter.call(filters['filter'], function(filter) {
-      return filter.checked;
-    })[0].value;
+    return screenHeight - bodyContentHeight > 0;
+  }
 
-    switch(selectedFilter) {
-      case 'popular':
-        initPictures(getPopularPictures());
+  function onPictureFilterClicked(e) {
+
+    switch(e.target) {
+      case popularFilter:
+        currentFilterPictures = getPopularPictures();
         break;
-      case 'new':
-        initPictures(getNewPictures());
+      case newFilter:
+        currentFilterPictures = getNewPictures();
         break;
-      case 'discussed':
-        initPictures(getDiscussedPictures());
+      case discussedFilter:
+        currentFilterPictures = getDiscussedPictures();
         break;
     }
+
+    renderPictures(currentFilterPictures);
   }
 
   /**
@@ -201,6 +243,37 @@
 
       clearTimeout(imgLoadTimeout);
     }
+  }
+
+  function setScrollEnabled() {
+    var scrollTimeoutId;
+    window.addEventListener('scroll', function() {
+      clearTimeout(scrollTimeoutId);
+      scrollTimeoutId = setTimeout(function() {
+        if (isBottomReached() && isNextPageAvailable(currentFilterPictures, currentPage, PAGE_SIZE)) {
+          currentPage++;
+          renderPictures(currentFilterPictures, currentPage);
+        }
+      }, SCROLL_TIMEOUT);
+    });
+  }
+
+  /** @return {boolean} */
+  function isBottomReached() {
+    var GAP = 100;
+    var footerElement = document.querySelector('footer');
+    var footerPosition = footerElement.getBoundingClientRect();
+    return footerPosition.top - window.innerHeight - GAP <= 0;
+  }
+
+  /**
+  * @param {Array} pictures
+  * @param {number} page
+  * @param {number} pageSize
+  * @return {boolean}
+  */
+  function isNextPageAvailable(pics, page, pageSize) {
+    return page < Math.floor(pics.length / pageSize);
   }
 
   // прячет фильтр.
