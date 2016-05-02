@@ -3,23 +3,36 @@
 (function() {
   var IMAGE_LOAD_TIMEOUT = 10000;
   var DOWNLOAD_PICTURES_URL = 'https://o0.github.io/assets/json/pictures.json';
+  var PAGE_SIZE = 12;
+  var SCROLL_TIMEOUT = 100;
 
   var filters = document.querySelector('.filters');
   var template = document.getElementById('picture-template');
-  var pictureTemplate;
 
+  var popularFilter = document.getElementById('filter-popular');
+  var newFilter = document.getElementById('filter-new');
+  var discussedFilter = document.getElementById('filter-discussed');
+
+  var pictureTemplate;
   if ('content' in template) {
     pictureTemplate = template.content.querySelector('.picture');
   } else {
     pictureTemplate = template.querySelector('.picture');
   }
 
-  var pictures;
-
-  filters.addEventListener('change', onPictureFilterChanged);
+  // переменная для хранения всех загруженных картинок.
+  var pictures = [];
+  // переменная для хранения картинок к которым применен текущий фильтр.
+  var currentFilterPictures = [];
+  // номер текущей показанной страницы.
+  var currentPage = 0;
 
   // получаем блок pictures, в который будем добавлять картинки.
   var picturesContainer = document.querySelector('.pictures');
+
+  var scrollTimeoutId;
+  window.addEventListener('scroll', setScrollEnabled);
+  filters.addEventListener('click', onPictureFilterClicked);
 
   hideFilter();
   // загрузить картинки
@@ -29,11 +42,10 @@
   function loadPictures() {
     showLoader();
 
-    var xhr = createXmlHttpRequest();
-    xhr.send();
+    sendXmlHttpRequest();
   }
 
-  function createXmlHttpRequest() {
+  function sendXmlHttpRequest() {
     var xhr = new XMLHttpRequest();
     xhr.open('GET', DOWNLOAD_PICTURES_URL, true);
     xhr.timeout = IMAGE_LOAD_TIMEOUT;
@@ -42,15 +54,21 @@
     xhr.addEventListener('error', onXhrError);
     xhr.addEventListener('timeout', onXhrTimeout);
 
-    return xhr;
+    xhr.send();
 
     function onXhrLoad() {
       // проинициализировать переменную картинками.
-      pictures = JSON.parse(xhr.responseText);
-      pictures.forEach(function(picture) {
-        picture.date = new Date(picture.date);
-      });
-      initPictures(pictures);
+      try {
+        pictures = JSON.parse(xhr.responseText);
+        pictures.forEach(function(picture) {
+          picture.date = new Date(picture.date);
+        });
+        currentFilterPictures = pictures.slice();
+        renderPictures(pictures);
+      } catch(ex) {
+        picturesContainer.classList.add('pictures-failure');
+      }
+
       hideLoader();
     }
 
@@ -78,33 +96,48 @@
   /**
   * Заполняет контейнер картинками.
   * @param {object} data
+  * @param {number} page
   */
-  function initPictures(data) {
-    data.forEach(function(picture) {
+  function renderPictures(data, page) {
+    // если номер страницы для отрисовки не передан,
+    // то очищаем контеёнер с картинками и отрисовываем первую страницу.
+    if (!page) {
+      clearPictures();
+      currentPage = 0;
+      page = 0;
+    }
+
+    var from = page * PAGE_SIZE;
+    var to = from + PAGE_SIZE;
+
+    data.slice(from, to).forEach(function(picture) {
       // для каждого элемента массива создаём блок
       // фотографии на основе шаблона.
       addPicture(picture, picturesContainer);
     });
+
+    // если место для картинок ещё естьи есть картинки
+    // то показываем след. страницу
+    if (isBottomReached() && isNextPageAvailable(data, page, PAGE_SIZE)) {
+      renderPictures(data, ++currentPage);
+    }
   }
 
-  function onPictureFilterChanged() {
-    clearPictures();
+  function onPictureFilterClicked(e) {
 
-    var selectedFilter = [].filter.call(filters['filter'], function(filter) {
-      return filter.checked;
-    })[0].value;
-
-    switch(selectedFilter) {
-      case 'popular':
-        initPictures(getPopularPictures());
+    switch(e.target) {
+      case popularFilter:
+        currentFilterPictures = getPopularPictures();
         break;
-      case 'new':
-        initPictures(getNewPictures());
+      case newFilter:
+        currentFilterPictures = getNewPictures();
         break;
-      case 'discussed':
-        initPictures(getDiscussedPictures());
+      case discussedFilter:
+        currentFilterPictures = getDiscussedPictures();
         break;
     }
+
+    renderPictures(currentFilterPictures);
   }
 
   /**
@@ -121,14 +154,12 @@
 
     var newPicturesDate = getNewPicturesDate();
 
-    // фильтруем картинки по дате
+    // фильтруем картинки по дате и сортируем их по убыванию даты.
     var newPictures = pictures.filter(function(picture) {
       // новыми считаются картинки с датой больше чем дата указанная выше.
       return picture.date >= newPicturesDate;
-    });
-
-	// сортируем картинки по убыванию даты.
-    newPictures.sort(function(p1, p2) {
+    })
+    .sort(function(p1, p2) {
       return p2.date - p1.date;
     });
 
@@ -199,6 +230,34 @@
 
       clearTimeout(imgLoadTimeout);
     }
+  }
+
+  function setScrollEnabled() {
+    clearTimeout(scrollTimeoutId);
+    scrollTimeoutId = setTimeout(function() {
+      if (isBottomReached() && isNextPageAvailable(currentFilterPictures, currentPage, PAGE_SIZE)) {
+        currentPage++;
+        renderPictures(currentFilterPictures, currentPage);
+      }
+    }, SCROLL_TIMEOUT);
+  }
+
+  /** @return {boolean} */
+  function isBottomReached() {
+    var GAP = 100;
+    var footerElement = document.querySelector('footer');
+    var footerPosition = footerElement.getBoundingClientRect();
+    return footerPosition.top - window.innerHeight - GAP <= 0;
+  }
+
+  /**
+  * @param {Array} pictures
+  * @param {number} page
+  * @param {number} pageSize
+  * @return {boolean}
+  */
+  function isNextPageAvailable(pics, page, pageSize) {
+    return page < Math.floor(pics.length / pageSize);
   }
 
   // прячет фильтр.
