@@ -249,6 +249,8 @@
     uploadMessage.classList.add('invisible');
   }
 
+  uploadForm.addEventListener('change', onUploadFormChange);
+
   /**
    * Обработчик изменения изображения в форме загрузки. Если загруженный
    * файл является изображением, считывается исходник картинки, создается
@@ -256,7 +258,7 @@
    * и показывается форма кадрирования.
    * @param {Event} evt
    */
-  uploadForm.onchange = function(evt) {
+  function onUploadFormChange(evt) {
     var element = evt.target;
     if (element.id === 'upload-file') {
       // Проверка типа загружаемого файла, тип должен быть изображением
@@ -292,14 +294,16 @@
         showMessage(Action.ERROR);
       }
     }
-  };
+  }
+
+  resizeForm.addEventListener('reset', onResizeFormReset);
 
   /**
    * Обработка сброса формы кадрирования. Возвращает в начальное состояние
    * и обновляет фон.
    * @param {Event} evt
    */
-  resizeForm.onreset = function(evt) {
+  function onResizeFormReset(evt) {
     evt.preventDefault();
 
     cleanupResizer();
@@ -307,14 +311,16 @@
 
     resizeForm.classList.add('invisible');
     uploadForm.classList.remove('invisible');
-  };
+  }
+
+  resizeForm.addEventListener('submit', onResizeFormSubmit);
 
   /**
    * Обработка отправки формы кадрирования. Если форма валидна, экспортирует
    * кропнутое изображение в форму добавления фильтра и показывает ее.
    * @param {Event} evt
    */
-  resizeForm.onsubmit = function(evt) {
+  function onResizeFormSubmit(evt) {
     evt.preventDefault();
 
     if (resizeFormIsValid()) {
@@ -331,26 +337,29 @@
     selectedFilter.checked = true;
 
     // вызываем обработчик изменения фильтра, чтобы выбранный фильтр был применен к кратинке.
-    onFilterChange();
-  };
+    onFilterFormChange();
+  }
+
+  filterForm.addEventListener('reset', onFilterFormReset);
 
   /**
    * Сброс формы фильтра. Показывает форму кадрирования.
    * @param {Event} evt
    */
-  filterForm.onreset = function(evt) {
+  function onFilterFormReset(evt) {
     evt.preventDefault();
 
     filterForm.classList.add('invisible');
     resizeForm.classList.remove('invisible');
-  };
+  }
 
+  filterForm.addEventListener('submit', onFilterFormSubmit);
   /**
    * Отправка формы фильтра. Возвращает в начальное состояние, предварительно
    * записав сохраненный фильтр в cookie.
    * @param {Event} evt
    */
-  filterForm.onsubmit = function(evt) {
+  function onFilterFormSubmit(evt) {
     evt.preventDefault();
 
     cleanupResizer();
@@ -358,15 +367,15 @@
 
     filterForm.classList.add('invisible');
     uploadForm.classList.remove('invisible');
-  };
+  }
 
   /**
    * Обработчик изменения фильтра. Добавляет класс из filterMap соответствующий
    * выбранному значению в форме.
    */
-  filterForm.addEventListener('change', onFilterChange);
+  filterForm.addEventListener('change', onFilterFormChange);
 
-  function onFilterChange(e) {
+  function onFilterFormChange(e) {
     if (!filterMap) {
       // Ленивая инициализация. Объект не создается до тех пор, пока
       // не понадобится прочитать его в первый раз, а после этого запоминается
