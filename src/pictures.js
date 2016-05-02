@@ -30,8 +30,9 @@
   // получаем блок pictures, в который будем добавлять картинки.
   var picturesContainer = document.querySelector('.pictures');
 
-  setScrollEnabled();
-  setFilterEnabled();
+  var scrollTimeoutId;
+  window.addEventListener('scroll', setScrollEnabled);
+  filters.addEventListener('click', onPictureFilterClicked);
 
   hideFilter();
   // загрузить картинки
@@ -42,10 +43,6 @@
     showLoader();
 
     sendXmlHttpRequest();
-  }
-
-  function setFilterEnabled() {
-    filters.addEventListener('click', onPictureFilterClicked);
   }
 
   function sendXmlHttpRequest() {
@@ -104,7 +101,7 @@
   function renderPictures(data, page) {
     // если номер страницы для отрисовки не передан,
     // то очищаем контеёнер с картинками и отрисовываем первую страницу.
-    if (typeof page === 'undefined') {
+    if (!page) {
       clearPictures();
       currentPage = 0;
       page = 0;
@@ -121,19 +118,9 @@
 
     // если место для картинок ещё естьи есть картинки
     // то показываем след. страницу
-    if (hasFreeSpace() && isNextPageAvailable(data, page, PAGE_SIZE)) {
+    if (isBottomReached() && isNextPageAvailable(data, page, PAGE_SIZE)) {
       renderPictures(data, ++currentPage);
     }
-  }
-
-  /**
-  * Определяет есть ли на экране свободное место для отображения картинок.
-  */
-  function hasFreeSpace() {
-    var screenHeight = window.screen.availHeight;
-    var bodyContentHeight = document.body.offsetHeight;
-
-    return screenHeight - bodyContentHeight > 0;
   }
 
   function onPictureFilterClicked(e) {
@@ -246,16 +233,13 @@
   }
 
   function setScrollEnabled() {
-    var scrollTimeoutId;
-    window.addEventListener('scroll', function() {
-      clearTimeout(scrollTimeoutId);
-      scrollTimeoutId = setTimeout(function() {
-        if (isBottomReached() && isNextPageAvailable(currentFilterPictures, currentPage, PAGE_SIZE)) {
-          currentPage++;
-          renderPictures(currentFilterPictures, currentPage);
-        }
-      }, SCROLL_TIMEOUT);
-    });
+    clearTimeout(scrollTimeoutId);
+    scrollTimeoutId = setTimeout(function() {
+      if (isBottomReached() && isNextPageAvailable(currentFilterPictures, currentPage, PAGE_SIZE)) {
+        currentPage++;
+        renderPictures(currentFilterPictures, currentPage);
+      }
+    }, SCROLL_TIMEOUT);
   }
 
   /** @return {boolean} */
