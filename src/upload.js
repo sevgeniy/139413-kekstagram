@@ -136,9 +136,7 @@
    */
   var resizeFwd = resizeForm['resize-fwd'];
 
-
-  var resizerchange = new CustomEvent('resizerchange');
-  window.addEventListener('resizerchange', updateResizeSubmitBtn);
+  window.addEventListener('resizerchange', onResizerChange);
 
   // Инициализируем поля ввода обработчиками событий.
   function initResizeInputs() {
@@ -176,7 +174,7 @@
 
   function onInput(e) {
     calcMax(e);
-    window.dispatchEvent(resizerchange);
+    updateResizer();
   }
 
   function calcMax(e) {
@@ -209,16 +207,19 @@
       input.value = input.min;
     }
 
-    window.dispatchEvent(resizerchange);
+    updateResizer();
   }
 
-  // Если все значения формы валидны, то кнопка отправки формы активна
-  // если нет, то кнопка не активна.
-  function updateResizeSubmitBtn() {
+  // Обновляем значения инпутов, проверяем валидны ли они
+  // и в зависимости от результата делаем активной кнопку отправки.
+  function onResizerChange() {
+    // получаем текущие значения Resizer-а (когда картинка была перемещена вручную)
+    var constraint = currentResizer.getConstraint();
+    inputX.value = constraint.x;
+    inputY.value = constraint.y;
+
     if (inputX.checkValidity() && inputY.checkValidity() && inputSize.checkValidity()) {
       enableResizeSubmitBtn();
-
-      updateResizer();
     } else {
       disableResizeSubmitBtn();
     }
@@ -229,7 +230,6 @@
    */
   function updateResizer() {
     currentResizer.setConstraint(+inputX.value, +inputY.value, +inputSize.value);
-    currentResizer.redraw();
   }
 
   function disableResizeSubmitBtn() {
